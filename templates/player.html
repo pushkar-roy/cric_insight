@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Stats</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+</head>
+<body class="bg-gray-100 text-gray-900">
+    <div class="container mx-auto p-8">
+        <h1 class="text-3xl font-bold mb-6">Stats for {{ player_name }}</h1>
+        
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-2xl font-semibold mb-4">Career Stats</h2>
+            <ul class="list-disc pl-5">
+                <li>Total Runs: {{ stats.total_runs }}</li>
+                <li>Total Fours: {{ stats.total_fours }}</li>
+                <li>Total Sixes: {{ stats.total_sixes }}</li>
+                <li>Total Dots: {{ stats.total_dots }}</li>
+                <li>Total Singles: {{ stats.total_singles }}</li>
+                <li>Total Doubles: {{ stats.total_doubles }}</li>
+                <li>Total Wickets: {{ stats.total_wickets }}</li>
+                <li>Average Runs: {{ stats.avg_runs|round(2) }}</li>
+                <li>Highest Runs in a Match: {{ stats.highest_runs }}</li>
+                <li>Highest Wickets in a Match: {{ stats.highest_wickets }}</li>
+            </ul>
+        </div>
+
+        <div class="bg-white p-6 mt-6 rounded-lg shadow-lg">
+            <h2 class="text-2xl font-semibold mb-4">Season-wise Stats</h2>
+            <table class="table-auto w-full border-collapse border border-gray-300">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="border border-gray-300 px-4 py-2">Season</th>
+                        <th class="border border-gray-300 px-4 py-2">Total Runs</th>
+                        <th class="border border-gray-300 px-4 py-2">Fours</th>
+                        <th class="border border-gray-300 px-4 py-2">Sixes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for season, runs, fours, sixes in stats.runs_per_season %}
+                    <tr>
+                        <td class="border border-gray-300 px-4 py-2">{{ season }}</td>
+                        <td class="border border-gray-300 px-4 py-2">{{ runs }}</td>
+                        <td class="border border-gray-300 px-4 py-2">{{ fours }}</td>
+                        <td class="border border-gray-300 px-4 py-2">{{ sixes }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
