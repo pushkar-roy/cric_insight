@@ -1,1 +1,1 @@
- or extras_type = "noballs"
+and inning <=2

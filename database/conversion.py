@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS deliveries (
     player_dismissed TEXT,
     dismissal_kind TEXT,
     fielder TEXT,
-    PRIMARY KEY (match_id, over, ball),
+    PRIMARY KEY (match_id, inning, over, ball),
     FOREIGN KEY (match_id) REFERENCES matches (id)
 );
 ''')
