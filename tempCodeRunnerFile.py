@@ -1,1 +1,0 @@
-and inning <=2
