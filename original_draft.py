@@ -167,4 +167,4 @@ LIMIT 1;
         "best_figure": best_figure,
     }
     
-print(get_player_stats("B Kumar"))
+print(get_player_stats("V Kohli"))
