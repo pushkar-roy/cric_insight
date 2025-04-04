@@ -15,7 +15,6 @@ def get_player_stats(player_name):
     );
     ''')
     (total_players,) = cursor.fetchone()
-    print(total_players)
 
 
     # Fetch Total Runs Scored, Fours, Sixes and Their Ranks
@@ -454,66 +453,61 @@ WHERE batter = ?;
 
     (best_figure_rank, best_figure) = cursor.fetchone() or (None, "0/0")
 
-
-    
     cursor.execute('''
-    WITH OverWiseData AS (
+    WITH DotBallData AS (
     SELECT 
         bowler,
         match_id,
-        over,
         SUM(batsman_runs) AS batsman_runs,
         SUM(CASE WHEN extras_type IN ('wides', 'noballs', 'penalty') THEN 1 ELSE 0 END) AS extra_runs
     FROM deliveries
     WHERE inning <= 2
-    GROUP BY bowler, match_id, over
+    GROUP BY bowler, match_id
     ),
-    MaidenOverCounts AS (
+    DotBallCounts AS (
     SELECT 
         bowler, 
-        COUNT(*) AS maiden_overs
-    FROM OverWiseData
+        COUNT(*) AS dot_balls
+    FROM DotBallData
     WHERE batsman_runs = 0 AND extra_runs = 0  -- Only count overs where no runs from bat and no wides/no-balls/penalties
     GROUP BY bowler
     ),
-    RankedMaidenOvers AS (
+    RankedDotBalls AS (
     SELECT 
         bowler,
-        maiden_overs,
-        RANK() OVER (ORDER BY maiden_overs DESC) AS ranking
-    FROM MaidenOverCounts
+        dot_balls,
+        RANK() OVER (ORDER BY dot_balls DESC) AS ranking
+    FROM DotBAllCounts
     )
-    SELECT COALESCE(ranking, NULL), COALESCE(maiden_overs, 0)
-    FROM RankedMaidenOvers
+    SELECT COALESCE(ranking, NULL), COALESCE(dot_balls, 0)
+    FROM RankedDotBalls
     WHERE bowler = ?;
     ''', (player_name,))
 
-    (maiden_over_rank, maiden_overs) = cursor.fetchone() or (None, 0)
+    (dot_balls_rank, dot_balls) = cursor.fetchone() or (None, 0)
 
 
     conn.close()
 
     return {
+        "total_players": total_players,
         "total_runs_scored": (total_runs_scored, total_runs_rank),
         "total_runs_given": (total_runs_given, total_runs_given_rank),
         "total_fours_scored": (total_fours, total_fours_rank),
         "total_sixes_scored": (total_sixes, total_sixes_rank),
-        "total_sixes_scored": (total_sixes, total_sixes_rank),
+        "total_wickets_taken": (total_wickets_taken, total_wickets_rank),
         "total_catches": (total_catches, total_catches_rank), 
         "total_ball_thrown": (total_ball_thrown, total_ball_thrown_rank),
-        "total_wickets_taken": (total_wickets_taken, total_wickets_rank),
-        "total_runs_given": (total_runs_given, total_runs_given_rank),
-        "batting_strike_rate": (batting_strike_rate, batting_strike_rate_rank),
+        "hundreds": (hundreds, hundreds_rank),
+        "fifties": (fifties, fifties_rank),
         "batting_avg": (batting_average, batting_average_rank),
+        "batting_strike_rate": (batting_strike_rate, batting_strike_rate_rank),
         "bowling_avg": (bowling_average, bowling_rank),
         "bowling_strike_rate": (bowling_strike_rate, bowling_strike_rate_rank),
         "economy": (economy, economy_rank),
-        "maiden_overs": (maiden_overs, maiden_over_rank),
+        "dot_balls": (dot_balls, dot_balls_rank),
         "five_wickets": (five_wickets, five_wickets_rank),
-        "hundreds": (hundreds, hundreds_rank),
-        "fifties": (fifties, fifties_rank),
         "high_score": (high_score, high_score_rank),
-        "best_figure": (best_figure, best_figure_rank),
+        "best_figure": (best_figure, best_figure_rank)
     }
 
-print(get_player_stats("SK Raina"))

@@ -5,17 +5,17 @@ def safe_div(numerator, denominator, multiplier=1):
 
 DB_PATH = "ipl_stats.db"
 
-def get_player_records():
+def get_team_records():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
     cursor.execute('''
         SELECT
-            batter,
+            batting_team,
             SUM(batsman_runs) as runs
         FROM deliveries
         where inning <=2
-        group by batter
+        group by batting_team
         order by runs desc
         limit 3
     ''')
@@ -23,11 +23,11 @@ def get_player_records():
     
     cursor.execute('''
         SELECT
-            batter,
+            batting_team,
             SUM(case when batsman_runs = 4 then 1 else 0 end) as fours
         FROM deliveries
         where inning <=2
-        group by batter
+        group by batting_team
         order by fours desc
         limit 3
     ''')
@@ -35,11 +35,11 @@ def get_player_records():
     
     cursor.execute('''
         SELECT
-            batter,
+            batting_team,
             SUM(case when batsman_runs = 6 then 1 else 0 end) as sixes
         FROM deliveries
         where inning <=2
-        group by batter
+        group by batting_team
         order by sixes desc
         limit 3
     ''')
@@ -47,11 +47,11 @@ def get_player_records():
 
     cursor.execute('''
         SELECT
-            bowler,
+            bowling_team,
             sum(case when dismissal_kind in ("caught", "bowled", "lbw", "stumped", "caught and bowled", "hit wicket") then 1 else 0 end) as wickets
         FROM deliveries
         where inning <=2
-        group by bowler
+        group by bowling_team
         order by wickets desc
         limit 3
     ''')
@@ -59,17 +59,17 @@ def get_player_records():
 
     cursor.execute('''
 SELECT 
-    fielder, 
+    bowling_team, 
     COUNT(*) AS catches
 FROM (
-    SELECT fielder FROM deliveries
+    SELECT bowling_team FROM deliveries
     WHERE inning <= 2 AND dismissal_kind = 'caught'
     
     UNION ALL
-    SELECT bowler as fielder FROM deliveries
+    SELECT bowling_team FROM deliveries
     WHERE inning <= 2 AND dismissal_kind = 'caught and bowled'
 ) AS combined_data
-GROUP BY fielder
+GROUP BY bowling_team
 ORDER BY catches DESC
 LIMIT 3;
 
@@ -78,51 +78,52 @@ LIMIT 3;
     
     cursor.execute('''
         SELECT
-            batter,
-            SUM(batsman_runs) as runs
+            batting_team,
+            SUM(total_runs) as runs
         FROM deliveries
         where inning <=2
-        group by batter, match_id
+        group by batting_team, match_id
         order by runs desc
         limit 3
     ''')
     most_runs_match = cursor.fetchall()
-    
-    cursor.execute('''
-        SELECT
-            batter,
-            SUM(batsman_runs) as runs
-        FROM deliveries
-        where inning <=2
-        group by batter, match_id, over
-        order by runs desc
-        limit 3
-    ''')
-    most_runs_over = cursor.fetchall()
 
     cursor.execute('''
         SELECT
-            bowler,
-            sum(case when dismissal_kind in ("caught", "bowled", "lbw", "stumped", "caught and bowled", "hit wicket") then 1 else 0 end) as wickets
-        FROM deliveries
-        where inning <=2
-        group by bowler, match_id
-        order by wickets desc
+            winner,
+            count(id) as wins
+        FROM matches
+        group by winner
+        order by wins desc
         limit 3
     ''')
-    most_wickets_match = cursor.fetchall()
+    most_match_wins = cursor.fetchall()
     
     cursor.execute('''
         SELECT
-            bowler,
-            sum(case when dismissal_kind in ("caught", "bowled", "lbw", "stumped", "caught and bowled", "hit wicket") then 1 else 0 end) as wickets
-        FROM deliveries
-        where inning <=2
-        group by bowler, match_id, over
-        order by wickets desc
+            winner,
+            count(id) as finals_wins
+        FROM matches
+        WHERE match_type = 'Final'
+        group by winner
+        order by finals_wins desc
         limit 3
     ''')
-    most_wickets_over = cursor.fetchall()
+    most_finals_wins = cursor.fetchall()
+
+    cursor.execute('''
+        SELECT
+            team, count(*) as finals_played
+        FROM (
+            SELECT team1 as team FROM matches WHERE match_type = 'Final'
+            UNION ALL
+            SELECT team2 as team FROM matches WHERE match_type = 'Final'
+        ) AS finals_teams
+        GROUP BY team
+        ORDER BY finals_played DESC
+        LIMIT 3
+    ''')
+    most_finals_played = cursor.fetchall()
 
     conn.close()
 
@@ -133,9 +134,7 @@ LIMIT 3;
         "most_wickets": most_wickets,
         "most_catches": most_catches,
         "most_runs_match": most_runs_match,
-        "most_runs_over": most_runs_over,
-        "most_wickets_match": most_wickets_match,
-        "most_wickets_over": most_wickets_over,
+        "most_match_wins": most_match_wins,
+        "most_finals_wins": most_finals_wins,
+        "most_finals_played": most_finals_played,
     }
-    
-print(get_player_records())

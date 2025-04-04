@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Player Stats</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .graph-row {
+            display: flex;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .graph-container {
+            width: 70%;
+            height: 300px;
+        }
+        .rank-progress {
+            width: 30%;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+        }
+        .rank-bar {
+            width: 20px;
+            height: 200px;
+            background-color: #f0f0f0;
+            position: relative;
+        }
+        .rank-bar-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: blue;
+        }
+        .last-3-row {
+            display: flex;
+            width: 100%;
+        }
+        .last-3-col {
+            width: 33.33%;
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+        }
+    </style>
+</head>
+<body>
+    <div id="graphs-container"></div>
+    <script>
+        const player_name = "{{ player_name }}";
+        fetch(`/data/${player_name}`)
+            .then(response => response.json())
+            .then(data => {
+                const graphsContainer = document.getElementById('graphs-container');
+                data.graphs.forEach(graphData => {
+                    const graphRow = document.createElement('div');
+                    graphRow.className = 'graph-row';
+
+                    const graphContainer = document.createElement('div');
+                    graphContainer.className = 'graph-container';
+                    const canvas = document.createElement('canvas');
+                    graphContainer.appendChild(canvas);
+                    graphRow.appendChild(graphContainer);
+
+                    const rankProgress = document.createElement('div');
+                    rankProgress.className = 'rank-progress';
+
+                    const percentage = 100 - (graphData.rank / data.total_players) * 100;
+
+                    rankProgress.innerHTML = `
+                        <div>Value: ${graphData.rank_value}</div>
+                        <div>Rank: ${graphData.rank}</div>
+                        <div class="rank-bar">
+                            <div class="rank-bar-fill" style="height: ${percentage}%;"></div>
+                        </div>
+                    `;
+                    graphRow.appendChild(rankProgress);
+
+                    graphsContainer.appendChild(graphRow);
+
+                    if (graphData.type === 'bar') {
+                        createBarChart(canvas, graphData.labels, graphData.values, graphData.title, graphData.y_axis_label, graphData.x_axis_label);
+                    } else if (graphData.type === 'line') {
+                        createLineChart(canvas, graphData.labels, graphData.values, graphData.title, graphData.y_axis_label, graphData.x_axis_label);
+                    }
+                });
+
+                // Last 3 columns
+                const last3Row = document.createElement('div');
+                last3Row.className = 'last-3-row';
+
+                data.last_3.forEach(item => {
+                    const col = document.createElement('div');
+                    col.className = 'last-3-col';
+                    const percentage = 100 - (item.rank / data.total_players) * 100;
+                    col.innerHTML = `
+                        <div>${item.title}: ${item.value}</div>
+                        <div>Rank: ${item.rank}</div>
+                        <div class="rank-bar">
+                            <div class="rank-bar-fill" style="height: ${percentage}%;"></div>
+                        </div>
+                    `;
+                    last3Row.appendChild(col);
+                });
+
+                graphsContainer.appendChild(last3Row);
+            });
+
+        function createBarChart(canvas, labels, values, title, yLabel, xLabel) {
+            const ctx = canvas.getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Data',
+                        data: values,
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: title
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: yLabel
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false,
+                            },
+                            title: {
+                                display: true,
+                                text: xLabel
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createLineChart(canvas, labels, values, title, yLabel, xLabel) {
+            const ctx = canvas.getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Data',
+                        data: values,
+                        fill: false,
+                        borderColor: 'rgb(255, 99, 132)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: title
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: yLabel
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false,
+                            },
+                            title: {
+                                display: true,
+                                text: xLabel
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

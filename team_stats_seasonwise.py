@@ -104,5 +104,3 @@ def get_team_stats_by_season(team_name):
         "total_sixes": sixes_by_season,
     }
 
-# Example usage
-print(get_team_stats_by_season("Mumbai Indians"))

@@ -5,7 +5,7 @@ def safe_div(numerator, denominator, multiplier=1):
 
 DB_PATH = "ipl_stats.db"
 
-def get_player_stats(team_name):
+def get_team_stats(team_name):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
@@ -24,13 +24,19 @@ def get_player_stats(team_name):
 
     cursor.execute('''
         SELECT 
-            SUM(CASE WHEN winner = ? THEN 1 ELSE 0 END),
-            SUM(CASE WHEN toss_winner = ? THEN 1 ELSE 0 END)
+            SUM(CASE WHEN winner = ? THEN 1 ELSE 0 END) AS total_wins
         FROM
             matches
-            
-    ''', (team_name, team_name))
-    (total_match_wins, total_toss_wins) = cursor.fetchone()
+    ''', (team_name, ))
+    (total_match_wins,) = cursor.fetchone()
+    
+    cursor.execute('''
+        SELECT 
+            COUNT(*) AS total_losses
+        FROM matches m
+        WHERE (m.team1 = ? OR m.team2 = ?) AND (m.winner <> ? AND m.winner IS NOT NULL)
+    ''', (team_name, team_name, team_name))
+    (total_match_lost, ) = cursor.fetchone()
     
     cursor.execute('''
         SELECT 
@@ -156,23 +162,16 @@ def get_player_stats(team_name):
     return {
         "total_match_played": total_match_played,
         "total_match_wins": total_match_wins,
-        "total_toss_wins": total_toss_wins,
-        "highest_score": highest_score,
-        "lowest_score": lowest_score, 
-        "highest_score_against": highest_score_against,
-        "lowest_score_against": lowest_score_against,
-        "most_win_against_team": most_win_against_team,
-        "total_win_against_that_team": total_win_against_that_team,
-        "most_lost_against_team": most_lost_against_team,
-        "total_lost_against_that_team": total_lost_against_that_team,
-        "most_win_on_venue": most_win_on_venue,
-        "total_win_on_that_venue": total_win_on_that_venue,
-        "most_lost_on_venue": most_lost_on_venue,
-        "total_lost_on_that_venue": total_lost_on_that_venue,
         "total_runs": total_runs,
+        "total_wickets": total_wickets,
         "total_fours": total_fours,
         "total_sixes": total_sixes,
-        "total_wickets": total_wickets,
+        "total_match_lost": total_match_lost,
+        "highest_score": (highest_score, highest_score_against),
+        "lowest_score": (lowest_score, lowest_score_against), 
+        "most_win_against_team": (total_win_against_that_team, most_win_against_team),
+        "most_lost_against_team": (total_lost_against_that_team, most_lost_against_team),
+        "most_win_on_venue": (total_win_on_that_venue, most_win_on_venue),
+        "most_lost_on_venue": (total_lost_on_that_venue, most_lost_on_venue),
     }
 
-print(get_player_stats("Mumbai Indians"))

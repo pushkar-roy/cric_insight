@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ team_name }} Stats</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .season-career-container {
+            display: flex;
+            width: 100%;
+        }
+        .season-section {
+            width: 70%;
+            padding: 10px;
+        }
+        .career-section {
+            width: 30%;
+            padding: 10px;
+        }
+        .career-row {
+            margin-bottom: 20px;
+        }
+        .last-row {
+            display: flex;
+            width: 100%;
+        }
+        .last-col {
+            width: 33.33%;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>{{ team_name }} Stats</h1>
+    <div id="season-career-records"></div>
+    <div id="last-career-records"></div>
+    <script>
+    const teamName = '{{ team_name }}';
+    fetch(`/team_data/${teamName}`)
+        .then(response => response.json())
+        .then(data => {
+            const seasonData = data.season_data;
+            const careerData = data.career_data;
+            const seasonCareerRecordsDiv = document.getElementById('season-career-records');
+            const lastCareerRecordsDiv = document.getElementById('last-career-records');
+
+            function createVerticalBarChart(data, element, title, valueKey) {
+                const canvas = document.createElement('canvas');
+                element.appendChild(canvas);
+                const ctx = canvas.getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(data),
+                        datasets: [{
+                            label: title,
+                            data: Object.values(data),
+                            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: title
+                            },
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                },
+                                grid: {
+                                    display: false // Remove y-axis grid lines
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false // Remove x-axis grid lines
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            const seasonKeys = ['total_matches', 'total_wins', 'total_losses', 'total_runs', 'total_wickets', 'total_fours', 'total_sixes'];
+            const careerKeys = ['total_match_played', 'total_match_wins', 'total_match_lost', 'total_runs', 'total_wickets', 'total_fours', 'total_sixes'];
+
+            const seasonCareerContainer = document.createElement('div');
+            seasonCareerContainer.className = 'season-career-container';
+            seasonCareerRecordsDiv.appendChild(seasonCareerContainer);
+
+            const seasonSection = document.createElement('div');
+            seasonSection.className = 'season-section';
+            seasonCareerContainer.appendChild(seasonSection);
+
+            const careerSection = document.createElement('div');
+            careerSection.className = 'career-section';
+            seasonCareerContainer.appendChild(careerSection);
+
+            seasonKeys.forEach((key, index) => {
+                const seasonDiv = document.createElement('div');
+                seasonDiv.className = 'career-row';
+                seasonSection.appendChild(seasonDiv);
+                createVerticalBarChart(seasonData[key], seasonDiv, key.replace(/_/g, ' ').toUpperCase(), key);
+
+                const careerDiv = document.createElement('div');
+                careerDiv.className = 'career-row';
+                careerSection.appendChild(careerDiv);
+                careerDiv.innerHTML = `<p><strong>${careerKeys[index].replace(/_/g, ' ').toUpperCase()}:</strong> ${careerData[careerKeys[index]]}</p>`;
+            });
+
+            const lastCareerKeys = ['highest_score', 'lowest_score', 'most_win_against_team', 'most_lost_against_team', 'most_win_on_venue', 'most_lost_on_venue'];
+
+            const lastRow1 = document.createElement('div');
+            lastRow1.className = 'last-row';
+            lastCareerRecordsDiv.appendChild(lastRow1);
+
+            const lastRow2 = document.createElement('div');
+            lastRow2.className = 'last-row';
+            lastCareerRecordsDiv.appendChild(lastRow2);
+
+            lastCareerKeys.forEach((key, index) => {
+                const col = document.createElement('div');
+                col.className = 'last-col';
+                if (index < 3) {
+                    lastRow1.appendChild(col);
+                } else {
+                    lastRow2.appendChild(col);
+                }
+                if (Array.isArray(careerData[key])) {
+                    col.innerHTML = `<p><strong>${key.replace(/_/g, ' ').toUpperCase()}:</strong> ${careerData[key][0]} (${careerData[key][1]})</p>`;
+                } else {
+                    col.innerHTML = `<p><strong>${key.replace(/_/g, ' ').toUpperCase()}:</strong> ${careerData[key]}</p>`;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

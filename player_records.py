@@ -138,4 +138,3 @@ LIMIT 3;
         "most_wickets_over": most_wickets_over,
     }
     
-print(get_player_records())
